@@ -297,8 +297,13 @@ export function Browse() {
                       loading={i < 4 ? "eager" : "lazy"}
                     />
                   </Link>
-                  {i === 0 && !search && (
-                    <span className="listing-badge">A local favorite</span>
+                  {l.status === "sold" ? (
+                    <span className="listing-badge">Sold</span>
+                  ) : (
+                    i === 0 &&
+                    !search && (
+                      <span className="listing-badge">A local favorite</span>
+                    )
                   )}
                   <button
                     className={

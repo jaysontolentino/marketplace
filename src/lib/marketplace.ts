@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 export type Listing = {
+  status?: "available" | "sold";
   id: string;
   title: string;
   description: string | null;

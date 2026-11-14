@@ -18,6 +18,7 @@ import { Header } from "./shell";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { ListingImage } from "./listing-image";
+import { PurchaseButton } from "./purchase-button";
 import { getListing, Listing, money, sendMessage } from "@/lib/marketplace";
 export function ListingDetail() {
   const params = useSearchParams();
@@ -103,10 +104,26 @@ export function ListingDetail() {
                 <div className="detail-category">
                   <Tag size={14} />
                   {listing.category}
-                  <span className="available-dot">Available</span>
+                  <span
+                    className={
+                      listing.status === "sold" ? "sold-label" : "available-dot"
+                    }
+                  >
+                    {listing.status === "sold" ? "Sold" : "Available"}
+                  </span>
                 </div>
                 <h1>{listing.title}</h1>
                 <div className="detail-price">{money(listing.price)}</div>
+                <PurchaseButton
+                  listingId={listing.id}
+                  sold={listing.status === "sold"}
+                />
+                {params.get("checkout") === "cancelled" && (
+                  <p role="status">
+                    Checkout was cancelled. Your item has not been purchased.
+                    You can resume using Buy Now.
+                  </p>
+                )}
                 <p className="detail-location">
                   <MapPin size={15} />
                   {listing.location || "Location not specified"}
