@@ -2507,3 +2507,80 @@ select:focus {
     scroll-behavior: auto !important;
   }
 }
+/* Stripe onboarding and receipts */
+.payment-page {
+  max-width: 660px;
+  margin: 48px auto;
+  padding: 0 20px;
+}
+.payment-card {
+  border: 1px solid #e6e8e5;
+  border-radius: 20px;
+  padding: clamp(24px, 5vw, 44px);
+  background: white;
+  display: grid;
+  gap: 22px;
+}
+.payment-card h1 {
+  font-size: clamp(26px, 4vw, 36px);
+  line-height: 1.2;
+  font-weight: 700;
+}
+.payment-card p {
+  color: #636b63;
+  line-height: 1.7;
+}
+.payment-card form {
+  display: grid;
+  gap: 14px;
+}
+.payment-card label {
+  font-weight: 600;
+}
+.payment-card a {
+  color: var(--primary);
+  font-weight: 600;
+}
+.payment-success {
+  padding: 18px;
+  border-radius: 10px;
+  background: #edf6ee;
+  color: #245d37;
+  line-height: 1.6;
+}
+.payment-error {
+  color: #b42318 !important;
+}
+.purchase-box {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+}
+.purchase-box p {
+  font-size: 13px;
+  color: #636b63;
+}
+.sold-label {
+  color: #965327;
+  font-size: 15px;
+  font-weight: 700;
+}
+.receipt {
+  display: grid;
+  gap: 10px;
+  padding: 20px;
+  border-radius: 12px;
+  background: #f5f7f4;
+}
+.receipt small {
+  overflow-wrap: anywhere;
+  color: #636b63;
+}
+@media (max-width: 640px) {
+  .header-right {
+    gap: 10px;
+  }
+  .header-right .header-sell {
+    font-size: 11px;
+  }
+}

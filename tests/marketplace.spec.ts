@@ -44,6 +44,9 @@ const initial: Listing[] = [
 
 // Intercept every Supabase data/storage request so tests cannot write to a real project.
 async function database(page: Page, rows = initial) {
+  await page.route("**/api/stripe/availability/**", (route) =>
+    route.fulfill({ json: { sold: false, purchasable: false } }),
+  );
   const listings = structuredClone(rows);
   const messages: Record<string, unknown>[] = [];
   const writes: string[] = [];
@@ -346,6 +349,94 @@ test("empty database and missing items show real empty states", async ({
   await expect(
     page.getByRole("heading", { name: "Listing not found" }),
   ).toBeVisible();
+});
+
+test("Stripe onboarding opens the hosted flow with the entered seller email", async ({
+  page,
+}) => {
+  await page.route("**/api/stripe/connect/**", async (route) => {
+    if (route.request().method() === "GET")
+      return route.fulfill({ json: { seller: null } });
+    expect(route.request().postDataJSON()).toEqual({
+      email: "seller@example.com",
+    });
+    return route.fulfill({
+      json: { url: "https://connect.stripe.com/test-onboarding" },
+    });
+  });
+  await page.route("https://connect.stripe.com/**", (route) =>
+    route.fulfill({
+      contentType: "text/html",
+      body: "<h1>Stripe onboarding</h1>",
+    }),
+  );
+  await page.goto("/connect/");
+  await page.getByLabel("Seller email").fill("seller@example.com");
+  await page.getByRole("button", { name: "Connect with Stripe" }).click();
+  await expect(page).toHaveURL("https://connect.stripe.com/test-onboarding");
+});
+
+test("Buy Now requires an onboarded seller and redirects to hosted checkout", async ({
+  page,
+}) => {
+  await database(page);
+  await page.goto("/listing/?id=" + id);
+  await expect(
+    page.getByText("Online checkout is not available for this item."),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Buy Now" })).toHaveCount(0);
+  await page.route("**/api/stripe/availability/**", (route) =>
+    route.fulfill({ json: { sold: false, purchasable: true } }),
+  );
+  await page.route("**/api/stripe/checkout/**", (route) => {
+    const body = route.request().postDataJSON();
+    expect(body.listingId).toBe(id);
+    expect(body.requestId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(Object.keys(body).sort()).toEqual(["listingId", "requestId"]);
+    return route.fulfill({
+      json: { url: "https://checkout.stripe.com/test-checkout" },
+    });
+  });
+  await page.route("https://checkout.stripe.com/**", (route) =>
+    route.fulfill({
+      contentType: "text/html",
+      body: "<h1>Stripe Checkout</h1>",
+    }),
+  );
+  await page.reload();
+  await page.getByRole("button", { name: "Buy Now" }).click();
+  await expect(page).toHaveURL("https://checkout.stripe.com/test-checkout");
+});
+
+test("confirmation waits for the webhook and sold items cannot be bought", async ({
+  page,
+}) => {
+  const state = await database(page);
+  let confirmed = false;
+  await page.route("**/api/stripe/order/**", (route) =>
+    route.fulfill({
+      json: {
+        id: "20000000-0000-4000-8000-000000000001",
+        listing_id: id,
+        listing_title: initial[0].title,
+        amount_total: initial[0].price * 100,
+        paymentReceived: true,
+        status: confirmed ? "paid" : "pending",
+      },
+    }),
+  );
+  await page.goto("/checkout/success/?session_id=cs_test_abc123");
+  await expect(
+    page.getByRole("heading", { name: "Payment received" }),
+  ).toBeVisible();
+  confirmed = true;
+  await expect(
+    page.getByRole("heading", { name: "Thanks for your purchase!" }),
+  ).toBeVisible();
+  Object.assign(state.listings[0], { status: "sold" });
+  await page.getByRole("link", { name: "View your item" }).click();
+  await expect(page.locator(".detail-category")).toContainText("Sold");
+  await expect(page.getByRole("button", { name: "Buy Now" })).toHaveCount(0);
 });
 
 test("mobile categories and listing form fit the viewport", async ({

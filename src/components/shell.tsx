@@ -91,6 +91,9 @@ export function Header({
         )}
       </div>
       <div className="header-right">
+        <Link href="/connect/" className="header-sell">
+          Connect with Stripe
+        </Link>
         <span className="local-label">
           <MapPin size={16} /> Palo Alto, CA
         </span>
