@@ -89,7 +89,6 @@ export function Header({
         ) : (
           <Link href="/">Search Marketplace</Link>
         )}
-        <span className="keyboard-hint">⌘ K</span>
       </div>
       <div className="header-right">
         <span className="local-label">
@@ -128,10 +127,15 @@ export function Sidebar({
         className="mobile-menu"
         onClick={() => setOpen(!open)}
         aria-label="Toggle categories"
+        aria-expanded={open}
+        aria-controls="marketplace-sidebar"
       >
         {open ? <X size={20} /> : <Menu size={20} />} Categories
       </button>
-      <aside className={"sidebar " + (open ? "sidebar-open" : "")}>
+      <aside
+        id="marketplace-sidebar"
+        className={"sidebar " + (open ? "sidebar-open" : "")}
+      >
         <div className="sidebar-title">
           <h1>Marketplace</h1>
           <span className="tiny-badge">LOCAL</span>
