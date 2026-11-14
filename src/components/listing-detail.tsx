@@ -14,16 +14,11 @@ import {
   Mail,
   Share2,
 } from "lucide-react";
-import { DemoBanner, Header } from "./shell";
+import { Header } from "./shell";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import {
-  getListing,
-  Listing,
-  money,
-  sendMessage,
-  supabase,
-} from "@/lib/marketplace";
+import { ListingImage } from "./listing-image";
+import { getListing, Listing, money, sendMessage } from "@/lib/marketplace";
 export function ListingDetail() {
   const params = useSearchParams();
   const [listing, setListing] = useState<Listing | null>(null);
@@ -34,20 +29,35 @@ export function ListingDetail() {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [copied, setCopied] = useState(false);
+  const id = params.get("id");
   useEffect(() => {
-    const id = params.get("id");
+    let active = true;
+    setLoading(true);
+    setListing(null);
+    setError("");
+    setSent(false);
+    setCopied(false);
     if (!id) {
       setLoading(false);
       return;
     }
     getListing(id)
-      .then(setListing)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [params]);
+      .then((value) => {
+        if (active) setListing(value);
+      })
+      .catch((e) => {
+        if (active) setError(e.message);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [id]);
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!listing) return;
+    if (!listing || sending) return;
     setSending(true);
     setError("");
     try {
@@ -63,7 +73,6 @@ export function ListingDetail() {
     <>
       <Header />
       <main className="detail-main">
-        <DemoBanner />
         <Link href="/" className="back-link">
           <ArrowLeft size={17} /> Back to Marketplace
         </Link>
@@ -85,8 +94,10 @@ export function ListingDetail() {
             </div>
             <div className="detail-grid">
               <div className="detail-photo">
-                <img src={listing.image_url} alt={listing.title} />
-                <span className="photo-count">1 / 1</span>
+                <ListingImage src={listing.image_url} title={listing.title} />
+                {listing.image_url && (
+                  <span className="photo-count">1 / 1</span>
+                )}
               </div>
               <section className="detail-information">
                 <div className="detail-category">
@@ -98,7 +109,7 @@ export function ListingDetail() {
                 <div className="detail-price">{money(listing.price)}</div>
                 <p className="detail-location">
                   <MapPin size={15} />
-                  {listing.location}
+                  {listing.location || "Location not specified"}
                 </p>
                 <p className="detail-date">
                   <Clock size={14} /> Listed{" "}
@@ -136,15 +147,10 @@ export function ListingDetail() {
                   {sent ? (
                     <div className="message-success" role="status">
                       <Check size={22} />
-                      <strong>
-                        {supabase
-                          ? "Your message has been sent!"
-                          : "Demo message saved!"}
-                      </strong>
+                      <strong>Your message has been sent!</strong>
                       <p>
-                        {supabase
-                          ? "The seller has received your message."
-                          : "This message is saved in your browser. Connect Supabase to send real messages."}
+                        Your message has been saved for the seller. Your email
+                        is included so they can reply.
                       </p>
                       <Button
                         variant="outline"
@@ -184,11 +190,7 @@ export function ListingDetail() {
                         className="w-full"
                         disabled={sending || !message.trim()}
                       >
-                        {sending
-                          ? "Sending…"
-                          : supabase
-                            ? "Send message"
-                            : "Save demo message"}
+                        {sending ? "Sending…" : "Send message"}
                         <ArrowUpRight size={17} />
                       </Button>
                       <p className="message-note">

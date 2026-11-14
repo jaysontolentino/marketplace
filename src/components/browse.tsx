@@ -14,8 +14,9 @@ import {
   X,
   Sparkles,
 } from "lucide-react";
-import { DemoBanner, Header, Sidebar } from "./shell";
+import { Header, Sidebar } from "./shell";
 import { Button } from "./ui/button";
+import { ListingImage } from "./listing-image";
 import { categories, getListings, Listing, money } from "@/lib/marketplace";
 export function Browse() {
   const params = useSearchParams();
@@ -48,13 +49,20 @@ export function Browse() {
     setSaved(next);
     localStorage.setItem("marketplace-saved", JSON.stringify(next));
   }
+  function browseAll() {
+    setSearch("");
+    setCategory("All categories");
+    setMax("");
+    setSavedOnly(false);
+    setFilters(false);
+  }
   const filtered = items
     .filter(
       (l) =>
         (category === "All categories" || l.category === category) &&
         (!savedOnly || saved.includes(l.id)) &&
         (!max || l.price <= Number(max)) &&
-        (l.title + " " + l.description)
+        (l.title + " " + (l.description ?? ""))
           .toLowerCase()
           .includes(search.toLowerCase()),
     )
@@ -71,6 +79,8 @@ export function Browse() {
       <Sidebar
         category={category}
         saved={savedOnly}
+        onBrowseAll={browseAll}
+        browseAllActive={!search && !max}
         onSaved={() => setSavedOnly(!savedOnly)}
         onCategory={(c) => {
           setCategory(c);
@@ -78,7 +88,6 @@ export function Browse() {
         }}
       />
       <main className="browse-main">
-        <DemoBanner />
         <section className="welcome-banner">
           <div>
             <div className="eyebrow">
@@ -265,15 +274,10 @@ export function Browse() {
             <Search size={32} />
             <h3>No finds just yet</h3>
             <p>Try another search or category, or add a listing of your own.</p>
-            <Button
-              onClick={() => {
-                setSearch("");
-                setCategory("All categories");
-                setMax("");
-                setSavedOnly(false);
-              }}
-            >
-              Browse all listings
+            <Button asChild>
+              <Link href="/" onNavigate={browseAll}>
+                Browse all listings
+              </Link>
             </Button>
           </div>
         ) : (
@@ -287,9 +291,9 @@ export function Browse() {
                     href={"/listing/?id=" + l.id}
                     aria-label={"View " + l.title}
                   >
-                    <img
+                    <ListingImage
                       src={l.image_url}
-                      alt={l.title}
+                      title={l.title}
                       loading={i < 4 ? "eager" : "lazy"}
                     />
                   </Link>
@@ -320,7 +324,7 @@ export function Browse() {
                     <span>{l.category}</span>
                   </div>
                   <h3>{l.title}</h3>
-                  <p>{l.location}</p>
+                  <p>{l.location || "Location not specified"}</p>
                 </Link>
               </article>
             ))}

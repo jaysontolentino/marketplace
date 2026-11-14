@@ -11,17 +11,19 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000. Without Supabase environment variables, the app uses a labeled demo mode with sample listings. New listings, uploaded photos, saved items, and buyer messages persist in this browser’s localStorage. Demo messages do not contact a seller. Browser storage has a limited quota; a failed save displays an error rather than reporting success.
+Open http://localhost:3000. The app uses Supabase for all listings, uploaded photos, and buyer messages. An empty database shows an empty marketplace. Missing configuration or failed requests display an error; no sample data or browser-local listing/message fallback is used. Saved-item bookmarks stay in this browser's localStorage.
 
-## Connect Supabase later
+## Supabase configuration
 
 1. Create a Supabase project.
 2. Run `supabase/migrations/202611140001_marketplace.sql` in the project's SQL Editor. It contains the supplied tables, indexes, RLS policies, image bucket, and update trigger, plus a 5 MB image limit and supported image MIME types.
 3. Copy `.env.example` to `.env.local`.
-4. Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to the project's URL and publishable/anon key. Never use a service-role key in these variables.
+4. Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` to the project's URL and publishable key. Legacy projects can use `NEXT_PUBLIC_SUPABASE_ANON_KEY` instead. Never use a service-role key in these variables.
 5. Restart `npm run dev`, or rebuild before deploying. These public variables are embedded at build time.
 
-Configured mode reads and writes listings to Supabase, uploads photos to `listing-images`, and inserts buyer messages into `messages`. It starts with your real database contents; demo data is not copied into Supabase. Demo messages and listings remain browser-local.
+Browsing and detail pages read from `listings`. Publishing uploads a validated image to `listing-images`, saves the listing with its public image URL, and opens the persisted item page. Messaging inserts the listing ID, buyer email, seller email, and message into `messages`; success appears only after Supabase accepts the insert. Existing tables and buckets do not need to be recreated if the migration is already applied.
+
+Uploads and listing inserts are separate requests. If an insert fails after a successful upload, the app reports the failure and the photo remains in Storage. The supplied storage policies do not allow anonymous deletion; no public delete policy is added.
 
 The migration preserves the requested public message SELECT policy. That policy lets anyone with the public API key read buyer/seller emails and message contents. Before using real customer messages, replace it with participant-only policies and add authenticated accounts. The UI does not expose an inbox, and messaging sends no email notifications. Seller email links open the user's email application.
 
@@ -41,6 +43,6 @@ npm test
 npm run build
 ```
 
-The browser tests use Microsoft Edge (installed locally) and start a dev server automatically. They cover search, categories, saved listings, sorting, publishing with a photo, message persistence, mobile layout, and empty states. For another browser, change the channel in `playwright.config.ts`.
+The browser tests use Microsoft Edge (installed locally) and start an isolated dev server on port 3100 with test-only Supabase configuration. Supabase HTTP requests are intercepted with test fixtures: no automated test writes to your real project. Tests cover browsing, filters, bookmarks, uploads followed by listing inserts, reloading a persisted item, messaging payloads, empty states, and database/storage failures. For another browser, change the channel in `playwright.config.ts`. Test fixtures are confined to the tests and are never imported by the application.
 
 The production build exports `out/`. Run `npm run dev` for local development, or `npm run build` followed by `npm start` to serve the production output. `.openai/hosting.json` configures private Sites hosting for this output. External product photos are loaded from Unsplash; replace them with your own images for real listings.

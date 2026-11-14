@@ -16,10 +16,10 @@ import {
   X,
   Eye,
 } from "lucide-react";
-import { DemoBanner, Header } from "./shell";
+import { Header } from "./shell";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { categories, createListing, money, supabase } from "@/lib/marketplace";
+import { categories, createListing, money } from "@/lib/marketplace";
 export function CreateListing() {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -58,6 +58,7 @@ export function CreateListing() {
   }
   async function submit(e: FormEvent) {
     e.preventDefault();
+    if (busy) return;
     if (!file) {
       setError("Add a photo of your item before publishing.");
       return;
@@ -126,7 +127,6 @@ export function CreateListing() {
           </div>
         </aside>
         <div className="create-content">
-          <DemoBanner />
           {step === 0 ? (
             <section className="choose-type">
               <span className="section-eyebrow">
@@ -336,17 +336,11 @@ export function CreateListing() {
                     </p>
                   )}
                   <Button className="w-full publish-button" disabled={busy}>
-                    {busy
-                      ? "Publishing…"
-                      : supabase
-                        ? "Publish listing"
-                        : "Publish demo listing"}
+                    {busy ? "Publishing…" : "Publish listing"}
                     <ArrowRight size={17} />
                   </Button>
                   <p className="message-note">
-                    {supabase
-                      ? "Your listing will be visible to everyone on Marketplace."
-                      : "Demo listings are saved in this browser only."}
+                    Your listing will be visible to everyone on Marketplace.
                   </p>
                 </form>
                 <div className="live-preview">

@@ -32,7 +32,7 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
-import { categories, supabase } from "@/lib/marketplace";
+import { categories } from "@/lib/marketplace";
 import { Button } from "./ui/button";
 const icons = [
   Grid2X2,
@@ -110,11 +110,15 @@ export function Sidebar({
   onCategory,
   saved = false,
   onSaved,
+  onBrowseAll,
+  browseAllActive = true,
 }: {
   category?: string;
   onCategory?: (s: string) => void;
   saved?: boolean;
   onSaved?: () => void;
+  onBrowseAll?: () => void;
+  browseAllActive?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const path = usePathname();
@@ -136,7 +140,18 @@ export function Sidebar({
         <nav className="main-nav">
           <Link
             href="/"
-            className={!saved && path === "/" ? "nav-item active" : "nav-item"}
+            className={
+              !saved &&
+              category === "All categories" &&
+              browseAllActive &&
+              path === "/"
+                ? "nav-item active"
+                : "nav-item"
+            }
+            onNavigate={() => {
+              onBrowseAll?.();
+              setOpen(false);
+            }}
           >
             <span className="nav-icon">
               <ShoppingBag size={19} />
@@ -211,12 +226,4 @@ export function Sidebar({
       </aside>
     </>
   );
-}
-export function DemoBanner() {
-  return !supabase ? (
-    <div className="demo-banner">
-      <span className="demo-dot" /> Demo mode · Explore sample finds. New
-      listings and messages are saved in this browser.
-    </div>
-  ) : null;
 }
